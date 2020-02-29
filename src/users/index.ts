@@ -1,15 +1,13 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { Map } from "immutable";
+import { Environment } from "jianhan-fp-lib";
 import _ from "lodash";
 import moment from "moment";
 import R from "ramda";
 import { Observable } from "rxjs";
 import S from "sanctuary";
+import { sprintf } from "sprintf";
 import { Logger } from "winston";
-// @ts-ignore
-import { Environment } from "../../../lib/src/constants";
-// @ts-ignore
-import { prefixDateTime } from "../../../lib/src/logics";
 import { getTwClient } from "../tw";
 import { s3Client } from "../upload";
 import { lookupAndUpload } from "./lookupAndUpload";
@@ -30,10 +28,10 @@ export const lambdaFunc = (envs: Map<string, string | Environment | undefined>, 
         access_token_key: envs.get("ACCESS_TOKEN") as string,
         access_token_secret: envs.get("ACCESS_SECRET") as string,
     });
-    const key = prefixDateTime("YYYY-MM-DD-HH:mm:ss")("users.json", moment());
+
     const result = lookupAndUpload({
         Bucket: envs.get("S3_BUCKET_NAME") as string,
-        Key: key,
+        Key: sprintf("%s_%s", moment().format("YYYY-MM-DD-HH:mm:ss"), "users.json"),
     }, s3, tw)(new UsersLookupParameters(
         _.get(event, "body.screenNames", []),
         _.get(event, "body.userIds", []),

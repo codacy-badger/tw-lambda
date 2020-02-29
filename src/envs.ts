@@ -1,14 +1,14 @@
-import {IsIn, IsNotEmpty, IsString} from "class-validator";
+import { IsIn, IsNotEmpty, IsString } from "class-validator";
 
 // @ts-ignore
-import {enumValues, Environment} from "../../lib/src/constants";
+import { enumValues, Environment } from "jianhan-fp-lib";
 
 /**
  * Environment variables.
  */
 export class Envs {
 
-    @IsIn(enumValues(Environment), {message: `NODE_ENV must be in ${enumValues(Environment)}`})
+    @IsIn(enumValues(Environment), { message: `NODE_ENV must be in ${enumValues(Environment)}` })
     public NODE_ENV?: string;
 
     @IsNotEmpty()

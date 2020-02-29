@@ -1,12 +1,7 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { constants } from "http2";
+import { createLogger, Environment, getEnvs, LogLevel } from "jianhan-fp-lib";
 import _ from "lodash";
-// @ts-ignore
-import { Environment, LogLevel } from "../../lib/src/constants";
-// @ts-ignore
-import { getEnvs } from "../../lib/src/envs";
-// @ts-ignore
-import { createLogger } from "../../lib/src/logger";
 import { Envs } from "./envs";
 
 export const handler = async (event: APIGatewayEvent): Promise<any> => {

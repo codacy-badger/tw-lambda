@@ -1,7 +1,9 @@
 import { ManagedUpload } from "aws-sdk/lib/s3/managed_upload";
 import { ValidationError } from "class-validator";
+import { map } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Map } from "immutable";
-import { Environment, getEnvs, LogLevel, createLogger, prefixDateTime } from "jianhan-fp-lib";
+import { createLogger, Environment, getEnvs, LogLevel, prefixDateTime } from "jianhan-fp-lib";
 import moment from "moment";
 import { Observable } from "rxjs";
 import S from "sanctuary";
@@ -25,7 +27,7 @@ describe("lookupAndUpload function should retrieve users information and upload 
 
     it("it should generate params, lookup users and upload", done => {
         const params = new UsersLookupParameters(["chenqiushi404"]);
-        const key = prefixDateTime("YYYY-MM-DD-HH:mm")("users.json", moment());
+        const key = prefixDateTime("YYYY-MM-DD-HH:mm:ss")("users.json", moment());
         const s3 = s3Client({
             accessKeyId: envs.get("S3_ACCESS_KEY_ID"),
             secretAccessKey: envs.get("S3_SECRET_ACCESS_KEY"),
@@ -38,31 +40,37 @@ describe("lookupAndUpload function should retrieve users information and upload 
             access_token_secret: envs.get("ACCESS_SECRET") as string,
         });
 
-        const lau = lookupAndUpload({ Bucket: envs.get("S3_BUCKET_NAME") as string, Key: key }, s3, tw)(params);
+        const r = pipe(key, map(
+            (keyStr: string) => {
+                const lau = lookupAndUpload({ Bucket: envs.get("S3_BUCKET_NAME") as string, Key: keyStr }, s3, tw)(params);
 
-        // @ts-ignore
-        expect(S.isLeft(lau)).toBe(false);
+                // @ts-ignore
+                expect(S.isLeft(lau)).toBe(false);
 
-        S.either((v: ValidationError[]) => {
-            logger.info(v);
-            done();
-        })((o: Observable<SendData>) => {
-            o.subscribe(
-                (r: SendData) => {
-                    expect(r).toHaveProperty("ETag");
+                S.either((v: ValidationError[]) => {
+                    logger.info(v);
                     done();
-                },
-                err => {
-                    logger.error(err);
-                    done();
-                },
-                () => {
-                    logger.info("completed", params);
-                    done();
-                },
-            );
-            // @ts-ignore
-        })(lau);
+                })((o: Observable<SendData>) => {
+                    o.subscribe(
+                        (r: SendData) => {
+                            expect(r).toHaveProperty("ETag");
+                            done();
+                        },
+                        err => {
+                            logger.error(err);
+                            done();
+                        },
+                        () => {
+                            logger.info("completed", params);
+                            done();
+                        },
+                    );
+                    // @ts-ignore
+                })(lau);
+            },
+        ));
+
+        expect(r._tag).toBe("Right");
     });
 
 });
